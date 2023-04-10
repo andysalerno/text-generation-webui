@@ -7,18 +7,10 @@ https://github.com/oobabooga/text-generation-webui/pull/175
 
 import asyncio
 import json
-import random
-import string
-
 import websockets
 
 
-def random_hash():
-    letters = string.ascii_lowercase + string.digits
-    return ''.join(random.choice(letters) for i in range(9))
-
-
-async def run(context):
+async def run(prompt):
     server = "127.0.0.1"
     params = {
         'max_new_tokens': 200,
@@ -37,44 +29,28 @@ async def run(context):
         'early_stopping': False,
         'seed': -1,
     }
-    payload = json.dumps([context, params])
-    session = random_hash()
 
-    async with websockets.connect(f"ws://{server}:7860/queue/join") as websocket:
-        while content := json.loads(await websocket.recv()):
-            # Python3.10 syntax, replace with if elif on older
-            match content["msg"]:
-                case "send_hash":
-                    await websocket.send(json.dumps({
-                        "session_hash": session,
-                        "fn_index": 12
-                    }))
-                case "estimation":
-                    pass
-                case "send_data":
-                    await websocket.send(json.dumps({
-                        "session_hash": session,
-                        "fn_index": 12,
-                        "data": [
-                            payload
-                        ]
-                    }))
-                case "process_starts":
-                    pass
-                case "process_generating" | "process_completed":
-                    yield content["output"]["data"][0]
-                    # You can search for your desired end indicator and
-                    #  stop generation by closing the websocket here
-                    if (content["msg"] == "process_completed"):
-                        break
+    params['prompt'] = prompt
 
-prompt = "What I would like to say is the following: "
+    async with websockets.connect(f"ws://{server}:5000/api/v1/stream") as websocket:
+        await websocket.send(json.dumps(params))
+
+        while incoming_data := json.loads(await websocket.recv()):
+            match incoming_data['event']:
+                case 'text_stream':
+                    yield incoming_data['text']
+                case 'stream_end':
+                    return
+
+prompt = "These are the best places to see the cherry blossoms in Seattle: "
 
 
 async def get_result():
+    print(prompt, end='')
+
     async for response in run(prompt):
         # Print intermediate steps
-        print(response)
+        print(response, end='')
 
     # Print final result
     print(response)
