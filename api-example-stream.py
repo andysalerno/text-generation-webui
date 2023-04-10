@@ -8,6 +8,7 @@ https://github.com/oobabooga/text-generation-webui/pull/175
 import asyncio
 import json
 import websockets
+import sys
 
 
 async def run(prompt):
@@ -51,6 +52,9 @@ async def get_result():
     async for response in run(prompt):
         # Print intermediate steps
         print(response, end='')
+
+        # Flush to see realtime generation. Disable and the runtime will most likely decide to flush line-by-line.
+        sys.stdout.flush() 
 
     # Print final result
     print(response)
