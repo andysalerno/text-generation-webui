@@ -47,6 +47,10 @@ async def _handle_connection(websocket, path):
             'length_penalty': float(message.get('length_penalty', 1)),
             'early_stopping': bool(message.get('early_stopping', False)),
             'seed': int(message.get('seed', -1)),
+            'add_bos_token': bool(message.get('add_bos_token', True)),
+            'truncation_length': int(message.get('truncation_length', 2048)),
+            'custom_stopping_strings': [],
+            'ban_eos_token': bool(message.get('ban_eos_token', False))
         }
 
         generator = generate_reply(
