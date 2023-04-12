@@ -65,10 +65,14 @@ async def _handle_connection(websocket, path):
 
         for a in generator:
             if len(websocket.messages) > 0:
+                print('message available')
                 message = await websocket.recv()
                 message = json.loads(message)
                 if message['stop_requested']:
+                    print('stop requested')
                     return
+            else:
+                print('no message available')
 
             to_send = ''
             if isinstance(a, str):
