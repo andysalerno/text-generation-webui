@@ -1,10 +1,8 @@
 # Text generation web UI
 
-A gradio web UI for running Large Language Models like LLaMA, llama.cpp, GPT-J, OPT, and GALACTICA.
+A gradio web UI for running Large Language Models like LLaMA, llama.cpp, GPT-J, Pythia, OPT, and GALACTICA.
 
 Its goal is to become the [AUTOMATIC1111/stable-diffusion-webui](https://github.com/AUTOMATIC1111/stable-diffusion-webui) of text generation.
-
-[[Try it on Google Colab]](https://colab.research.google.com/github/oobabooga/AI-Notebooks/blob/main/Colab-TextGen-GPU.ipynb)
 
 |![Image1](https://github.com/oobabooga/screenshots/raw/main/qa.png) | ![Image2](https://github.com/oobabooga/screenshots/raw/main/cai3.png) |
 |:---:|:---:|
@@ -15,7 +13,7 @@ Its goal is to become the [AUTOMATIC1111/stable-diffusion-webui](https://github.
 * Dropdown menu for switching between models
 * Notebook mode that resembles OpenAI's playground
 * Chat mode for conversation and role playing
-* Instruct mode compatible with Alpaca and Open Assistant formats **\*NEW!\***
+* Instruct mode compatible with Alpaca, Vicuna, and Open Assistant formats **\*NEW!\***
 * Nice HTML output for GPT-4chan
 * Markdown output for [GALACTICA](https://github.com/paperswithcode/galai), including LaTeX rendering
 * [Custom chat characters](https://github.com/oobabooga/text-generation-webui/wiki/Custom-chat-characters)
@@ -34,7 +32,6 @@ Its goal is to become the [AUTOMATIC1111/stable-diffusion-webui](https://github.
 * [LoRA (loading and training)](https://github.com/oobabooga/text-generation-webui/wiki/Using-LoRAs)
 * Softprompts
 * [Extensions](https://github.com/oobabooga/text-generation-webui/wiki/Extensions)
-* [Google Colab](https://github.com/oobabooga/text-generation-webui/wiki/Running-on-Colab)
 
 ## Installation
 
@@ -73,8 +70,14 @@ On Linux or WSL, it can be automatically installed with these two commands:
 curl -sL "https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh" > "Miniconda3.sh"
 bash Miniconda3.sh
 ```
-
 Source: https://educe-ubc.github.io/conda.html
+
+#### 0.1 (Ubuntu/WSL) Install build tools
+
+```
+sudo apt install build-essential
+```
+
 
 #### 1. Create a new conda environment
 
@@ -209,7 +212,7 @@ Optionally, you can use the following command-line flags:
 
 | Flag                                        | Description |
 |---------------------------------------------|-------------|
-| `--cpu`                                     | Use the CPU to generate text. |
+| `--cpu`                                     | Use the CPU to generate text. Warning: Training on CPU is extremely slow.|
 | `--auto-devices`                            | Automatically split the model across the available GPU(s) and CPU. |
 |  `--gpu-memory GPU_MEMORY [GPU_MEMORY ...]` | Maxmimum GPU memory in GiB to be allocated per GPU. Example: `--gpu-memory 10` for a single GPU, `--gpu-memory 10 5` for two GPUs. You can also set values in MiB like `--gpu-memory 3500MiB`. |
 | `--cpu-memory CPU_MEMORY`                   | Maximum CPU memory in GiB to allocate for offloaded weights. Same as above.|
@@ -218,6 +221,8 @@ Optionally, you can use the following command-line flags:
 | `--load-in-8bit`                            | Load the model with 8-bit precision.|
 | `--bf16`                                    | Load the model with bfloat16 precision. Requires NVIDIA Ampere GPU. |
 | `--no-cache`                                | Set `use_cache` to False while generating text. This reduces the VRAM usage a bit with a performance cost. |
+| `--xformers`                                | Use xformer's memory efficient attention. This should increase your tokens/s. |
+| `--sdp-attention`                           | Use torch 2.0's sdp attention. |
 
 #### llama.cpp
 
@@ -284,7 +289,9 @@ Check the [wiki](https://github.com/oobabooga/text-generation-webui/wiki/System-
 
 ## Contributing
 
-Pull requests, suggestions, and issue reports are welcome.
+Pull requests, suggestions, and issue reports are welcome. 
+
+You are also welcome to review open pull requests.
 
 Before reporting a bug, make sure that you have:
 
