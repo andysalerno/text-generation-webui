@@ -64,6 +64,12 @@ async def _handle_connection(websocket, path):
         message_num = 0
 
         for a in generator:
+            if len(websocket.messages) > 0:
+                message = await websocket.recv()
+                message = json.loads(message)
+                if message['stop_requested']:
+                    return
+
             to_send = ''
             if isinstance(a, str):
                 to_send = a[skip_index:]
@@ -83,6 +89,10 @@ async def _handle_connection(websocket, path):
             'event': 'stream_end',
             'message_num': message_num
         }))
+
+
+async def get_next_prediction():
+    pass
 
 
 async def _run(host: str, port: int):
