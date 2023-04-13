@@ -18,7 +18,9 @@ async def _handle_connection(websocket, path):
     if path != PATH:
         return
 
-    async for message in websocket:
+    while True:
+        message = await websocket.recv()
+
         print(f'got message: {message}')
 
         message = json.loads(message)
