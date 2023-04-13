@@ -88,14 +88,12 @@ async def _handle_connection(websocket, path):
                 return
 
             try:
-                if len(websocket.messages) > 0:
-                    print('websocket has some messages for us')
-                received = websocket.messages.pop()  # private API /!\
+                received = websocket.messages.popleft()  # private API /!\
+                print(f'got message: {received}')
                 received = json.loads(received)
-                print('stop requested')
                 stop_requested = True
-            except IndexError:
-                pass
+            except Exception:
+                print('popleft failed')
 
             to_send = ''
             if isinstance(a, str):
