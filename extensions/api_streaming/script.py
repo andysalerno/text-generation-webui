@@ -75,7 +75,7 @@ async def _handle_connection(websocket, path):
                 print('stop requested')
                 stop_requested = True
             except IndexError:
-                break
+                pass
 
             to_send = ''
             if isinstance(a, str):
