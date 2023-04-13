@@ -77,6 +77,7 @@ async def _handle_connection(websocket, path):
         stop_requested = False
 
         for a in generator:
+            print('generating...')
             if stop_requested:
                 break
 
