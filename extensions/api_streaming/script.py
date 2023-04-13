@@ -83,6 +83,10 @@ async def _handle_connection(websocket, path):
             if stop_requested:
                 break
 
+            if websocket.closed:
+                print('closed connection.')
+                return
+
             try:
                 if len(websocket.messages) > 0:
                     print('websocket has some messages for us')
