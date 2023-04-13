@@ -63,16 +63,17 @@ async def _handle_connection(websocket, path):
         skip_index = len(prompt)
         message_num = 0
 
+        stop_requested = False
+
         for a in generator:
-            if len(websocket.messages) > 0:
-                print('message available')
-                message = await websocket.recv()
-                message = json.loads(message)
-                if message['stop_requested']:
-                    print('stop requested')
-                    return
-            else:
-                print('no message available')
+            if stop_requested:
+                return
+
+            async with asyncio.timeout(0.01):
+                received = await websocket.recv()
+                received = json.loads(received)
+                print('stop requested')
+                stop_requested = True
 
             to_send = ''
             if isinstance(a, str):
