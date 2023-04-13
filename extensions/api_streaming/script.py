@@ -19,9 +19,14 @@ async def _handle_connection(websocket, path):
         return
 
     async for message in websocket:
+        print(f'got message: {message}')
+
         message = json.loads(message)
 
-        prompt = message['prompt']
+        prompt = message.get('prompt', '')
+
+        if prompt == '':
+            continue
 
         prompt_lines = [k.strip() for k in prompt.split('\n')]
 
