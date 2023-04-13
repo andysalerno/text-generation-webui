@@ -25,6 +25,12 @@ async def _handle_connection(websocket, path):
 
         prompt = message.get('prompt', '')
 
+        stop_requested = message.get('stop_requested', False)
+
+        if stop_requested:
+            await websocket.close()
+            return
+
         if prompt == '':
             continue
 
@@ -72,7 +78,7 @@ async def _handle_connection(websocket, path):
 
         for a in generator:
             if stop_requested:
-                return
+                break
 
             try:
                 if len(websocket.messages) > 0:
