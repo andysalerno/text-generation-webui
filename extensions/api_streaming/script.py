@@ -70,11 +70,11 @@ async def _handle_connection(websocket, path):
                 return
 
             try:
-                received = websocket.messages.get_nowait()  # private API /!\
+                received = websocket.messages.pop()  # private API /!\
                 received = json.loads(received)
                 print('stop requested')
                 stop_requested = True
-            except asyncio.queues.QueueEmpty:
+            except IndexError:
                 break
 
             to_send = ''
