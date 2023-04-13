@@ -75,6 +75,8 @@ async def _handle_connection(websocket, path):
                 return
 
             try:
+                if len(websocket.messages) > 0:
+                    print('websocket has some messages for us')
                 received = websocket.messages.pop()  # private API /!\
                 received = json.loads(received)
                 print('stop requested')
