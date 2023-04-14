@@ -23,14 +23,14 @@ async def _handle_connection(websocket, path):
 
         prompt = message['prompt']
 
-        prompt_lines = [k.strip() for k in prompt.split('\n')]
+        # prompt_lines = [k.strip() for k in prompt.split('\n')]
 
-        max_context = message.get('max_context_length', 2048)
+        # max_context = message.get('max_context_length', 2048)
 
-        while len(prompt_lines) >= 0 and len(encode('\n'.join(prompt_lines))) > max_context:
-            prompt_lines.pop(0)
+        # while len(prompt_lines) >= 0 and len(encode('\n'.join(prompt_lines))) > max_context:
+        #     prompt_lines.pop(0)
 
-        prompt = '\n'.join(prompt_lines)
+        # prompt = '\n'.join(prompt_lines)
         generate_params = {
             'max_new_tokens': int(message.get('max_length', 200)),
             'do_sample': bool(message.get('do_sample', True)),
