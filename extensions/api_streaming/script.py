@@ -86,7 +86,7 @@ async def text_generator():
 
     while True:
         if not any(incoming_generate_queue):
-            asyncio.sleep(0.1)
+            await asyncio.sleep(0.1)
             continue
 
         print('beginning to generate')
@@ -102,36 +102,39 @@ async def text_generator():
         skip_index = len(prompt)
         message_num = 0
 
-        for a in generator:
-            print('generating...')
+        try:
+            for a in generator:
+                print('generating...')
 
-            if stop_requested:
-                stop_requested = False
-                break
+                if stop_requested:
+                    stop_requested = False
+                    break
 
-            if websocket.closed:
-                print('closed connection.')
-                return
+                if websocket.closed:
+                    print('closed connection.')
+                    return
 
-            to_send = ''
-            if isinstance(a, str):
-                to_send = a[skip_index:]
-            else:
-                to_send = a[0][skip_index:]
+                to_send = ''
+                if isinstance(a, str):
+                    to_send = a[skip_index:]
+                else:
+                    to_send = a[0][skip_index:]
+
+                await websocket.send(json.dumps({
+                    'event': 'text_stream',
+                    'message_num': message_num,
+                    'text': to_send
+                }))
+
+                skip_index += len(to_send)
+                message_num += 1
 
             await websocket.send(json.dumps({
-                'event': 'text_stream',
-                'message_num': message_num,
-                'text': to_send
+                'event': 'stream_end',
+                'message_num': message_num
             }))
-
-            skip_index += len(to_send)
-            message_num += 1
-
-        await websocket.send(json.dumps({
-            'event': 'stream_end',
-            'message_num': message_num
-        }))
+        except:
+            pass
 
 
 async def _run(host: str, port: int):
