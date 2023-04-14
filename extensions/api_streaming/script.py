@@ -1,7 +1,9 @@
+from ast import List
 import json
 import asyncio
 from websockets.server import serve
 from threading import Thread
+from collections import deque
 
 from modules import shared
 from modules.text_generation import encode, generate_reply
@@ -12,8 +14,14 @@ params = {
     'port': 5000,
 }
 
+tokens_queue = deque()
+incoming_generate_queue = deque()
+stop_requested = False
+
 
 async def _handle_connection(websocket, path):
+    global incoming_generate_queue
+    global stop_requested
 
     if path != PATH:
         return
@@ -66,34 +74,44 @@ async def _handle_connection(websocket, path):
             'ban_eos_token': bool(message.get('ban_eos_token', False))
         }
 
+        # tell the generator to start generating
+        incoming_generate_queue.append((generate_params, prompt, websocket))
+
+
+async def text_generator():
+    global stop_requested
+    global incoming_generate_queue
+
+    print('starting text generator.')
+
+    while True:
+        if not any(incoming_generate_queue):
+            asyncio.sleep(0.1)
+            continue
+
+        print('beginning to generate')
+        (generate_params, prompt, websocket) = incoming_generate_queue.popleft()
+
         generator = generate_reply(
             prompt,
             generate_params,
-            stopping_strings=message.get('stopping_strings', []),
+            stopping_strings=generate_params.get('stopping_strings', []),
         )
 
         # As we stream, only send the new bytes.
         skip_index = len(prompt)
         message_num = 0
 
-        stop_requested = False
-
         for a in generator:
             print('generating...')
+
             if stop_requested:
+                stop_requested = False
                 break
 
             if websocket.closed:
                 print('closed connection.')
                 return
-
-            try:
-                received = websocket.messages.popleft()  # private API /!\
-                print(f'got message: {received}')
-                received = json.loads(received)
-                stop_requested = True
-            except Exception:
-                print('popleft failed')
 
             to_send = ''
             if isinstance(a, str):
@@ -116,13 +134,13 @@ async def _handle_connection(websocket, path):
         }))
 
 
-async def get_next_prediction():
-    pass
-
-
 async def _run(host: str, port: int):
     async with serve(_handle_connection, host, port):
         await asyncio.Future()  # run forever
+
+
+def _run_generator():
+    asyncio.run(text_generator)
 
 
 def _run_server():
@@ -135,3 +153,4 @@ def _run_server():
 
 def setup():
     Thread(target=_run_server, daemon=True).start()
+    Thread(target=_run_generator, daemon=True).start()
