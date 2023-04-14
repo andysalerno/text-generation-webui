@@ -95,7 +95,8 @@ async def text_generator():
         generator = generate_reply(
             prompt,
             generate_params,
-            stopping_strings=generate_params.get('stopping_strings', []),
+            stopping_strings=generate_params.get(
+                'stopping_strings', generate_params['custom_stopping_strings']),
         )
 
         # As we stream, only send the new bytes.
