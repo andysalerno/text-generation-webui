@@ -184,8 +184,8 @@ def generate_reply(question, state, eos_token=None, stopping_strings=[]):
     original_input_ids = input_ids
     output = input_ids[0]
 
-    if shared.args.verbose:
-        print(f'\n\n{decode(input_ids[0])}\n--------------------\n')
+    # if shared.args.verbose:
+    print(f'\n\n{decode(input_ids[0])}\n--------------------\n')
 
     cuda = not any(
         (shared.args.cpu, shared.args.deepspeed, shared.args.flexgen))
@@ -199,12 +199,14 @@ def generate_reply(question, state, eos_token=None, stopping_strings=[]):
     stopping_criteria_list = transformers.StoppingCriteriaList()
     for st in [stopping_strings, state['custom_stopping_strings']]:
         if type(st) is list and len(st) > 0:
+            print(f'strings are list')
             sentinel_token_ids = [
                 encode(string, add_special_tokens=False) for string in st]
             stopping_criteria_list.append(_SentinelTokenStoppingCriteria(
                 sentinel_token_ids=sentinel_token_ids, starting_idx=len(input_ids[0])))
             break
         elif type(st) is str:
+            print(f'strings are string')
             sentinel_token_ids = encode(st, add_special_tokens=False)
             stopping_criteria_list.append(_SentinelTokenStoppingCriteria(
                 sentinel_token_ids=sentinel_token_ids, starting_idx=len(input_ids[0])))

@@ -105,8 +105,6 @@ async def text_generator():
 
         try:
             for a in generator:
-                print('generating...')
-
                 if stop_requested:
                     stop_requested = False
                     break
