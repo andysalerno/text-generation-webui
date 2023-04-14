@@ -112,7 +112,7 @@ async def text_generator():
 
                 if websocket.closed:
                     print('closed connection.')
-                    return
+                    break
 
                 to_send = ''
                 if isinstance(a, str):
@@ -135,6 +135,8 @@ async def text_generator():
             }))
         except:
             pass
+
+        print('done generating.')
 
 
 async def _run(host: str, port: int):
