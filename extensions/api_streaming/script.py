@@ -56,9 +56,7 @@ async def _handle_connection(websocket, path):
         generator = generate_reply(
             prompt,
             generate_params,
-            stopping_strings=message.get(
-                'stopping_strings', message.get('stopping_strings', '')),
-        )
+            stopping_strings=message.get('stopping_strings', []))
 
         # As we stream, only send the new bytes.
         skip_index = len(prompt)
