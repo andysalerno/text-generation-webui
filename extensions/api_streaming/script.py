@@ -140,7 +140,7 @@ async def _run(host: str, port: int):
 
 
 def _run_generator():
-    asyncio.run(text_generator)
+    asyncio.run(text_generator())
 
 
 def _run_server():
