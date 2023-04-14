@@ -53,9 +53,6 @@ async def _handle_connection(websocket, path):
             'ban_eos_token': bool(message.get('ban_eos_token', False))
         }
 
-        print(f'params:')
-        print(str(generate_params))
-
         generator = generate_reply(
             prompt,
             generate_params,

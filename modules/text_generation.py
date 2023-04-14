@@ -203,6 +203,8 @@ def generate_reply(question, state, eos_token=None, stopping_strings=[]):
     # Handling the stopping strings
     print(f'custom stopping list: {state["custom_stopping_strings"]}')
     print(f'stopping list: {stopping_strings}')
+    print(f'full params:')
+    print(str(state))
     stopping_criteria_list = transformers.StoppingCriteriaList()
     for st in [stopping_strings, state['custom_stopping_strings']]:
         if type(st) is list and len(st) > 0:
