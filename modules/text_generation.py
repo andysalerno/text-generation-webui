@@ -115,7 +115,11 @@ def formatted_outputs(reply, model_name):
 def set_manual_seed(seed):
     seed = int(seed)
     if seed == -1:
+        print(f'randomizing seed {seed}')
         seed = random.randint(1, 2**31)
+        print(f'randomized to seed {seed}')
+    else:
+        print(f'not randomizing seed {seed}')
     torch.manual_seed(seed)
     if torch.cuda.is_available():
         torch.cuda.manual_seed_all(seed)

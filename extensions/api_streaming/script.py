@@ -38,7 +38,7 @@ async def _handle_connection(websocket, path):
             'top_p': float(message.get('top_p', 1)),
             'typical_p': float(message.get('typical', 1)),
             'repetition_penalty': float(message.get('rep_pen', 1.1)),
-            'encoder_repetition_penalty': 1,
+            'encoder_repetition_penalty': float(message.get('encoder_repetition_penalty', 1)),
             'top_k': int(message.get('top_k', 0)),
             'min_length': int(message.get('min_length', 0)),
             'no_repeat_ngram_size': int(message.get('no_repeat_ngram_size', 0)),
