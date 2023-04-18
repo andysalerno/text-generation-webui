@@ -50,7 +50,8 @@ async def _handle_connection(websocket, path):
             'add_bos_token': bool(message.get('add_bos_token', True)),
             'truncation_length': int(message.get('truncation_length', 2048)),
             'custom_stopping_strings': message.get('custom_stopping_strings', []),
-            'ban_eos_token': bool(message.get('ban_eos_token', False))
+            'ban_eos_token': bool(message.get('ban_eos_token', False)),
+            'skip_special_tokens': bool(message.get('skip_special_tokens', True))
         }
 
         generator = generate_reply(
