@@ -1,3 +1,5 @@
+from utils.modelutils import find_layers
+import llama_inference_offload
 import inspect
 import re
 import sys
@@ -11,8 +13,6 @@ from transformers import AutoConfig, AutoModelForCausalLM
 import modules.shared as shared
 
 sys.path.insert(0, str(Path("repositories/GPTQ-for-LLaMa")))
-import llama_inference_offload
-from modelutils import find_layers
 
 try:
     from quant import make_quant
@@ -96,7 +96,8 @@ def find_quantized_model_file(model_name):
     path_to_model = Path(f'{shared.args.model_dir}/{model_name}')
     pt_path = None
     priority_name_list = [
-        Path(f'{shared.args.model_dir}/{model_name}{hyphen}{shared.args.wbits}bit{group}{ext}')
+        Path(
+            f'{shared.args.model_dir}/{model_name}{hyphen}{shared.args.wbits}bit{group}{ext}')
         for group in ([f'-{shared.args.groupsize}g', ''] if shared.args.groupsize > 0 else [''])
         for ext in ['.safetensors', '.pt']
         for hyphen in ['-', f'/{model_name}-', '/']
@@ -115,11 +116,13 @@ def find_quantized_model_file(model_name):
 
         if len(found_pts) > 0:
             if len(found_pts) > 1:
-                print('Warning: more than one .pt model has been found. The last one will be selected. It could be wrong.')
+                print(
+                    'Warning: more than one .pt model has been found. The last one will be selected. It could be wrong.')
             pt_path = found_pts[-1]
         elif len(found_safetensors) > 0:
             if len(found_pts) > 1:
-                print('Warning: more than one .safetensors model has been found. The last one will be selected. It could be wrong.')
+                print(
+                    'Warning: more than one .safetensors model has been found. The last one will be selected. It could be wrong.')
             pt_path = found_safetensors[-1]
 
     return pt_path
@@ -149,7 +152,8 @@ def load_quantized(model_name):
         load_quant = llama_inference_offload.load_quant
     elif model_type in ('llama', 'opt', 'gptj'):
         if shared.args.pre_layer:
-            print("Warning: ignoring --pre_layer because it only works for llama model type.")
+            print(
+                "Warning: ignoring --pre_layer because it only works for llama model type.")
         load_quant = _load_quant
     else:
         print("Unknown pre-quantized model type specified. Only 'llama', 'opt' and 'gptj' are supported")
@@ -159,34 +163,42 @@ def load_quantized(model_name):
     path_to_model = Path(f'{shared.args.model_dir}/{model_name}')
     pt_path = find_quantized_model_file(model_name)
     if not pt_path:
-        print("Could not find the quantized model in .pt or .safetensors format, exiting...")
+        print(
+            "Could not find the quantized model in .pt or .safetensors format, exiting...")
         exit()
     else:
         print(f"Found the following quantized model: {pt_path}")
 
     # qwopqwop200's offload
     if model_type == 'llama' and shared.args.pre_layer:
-        model = load_quant(str(path_to_model), str(pt_path), shared.args.wbits, shared.args.groupsize, shared.args.pre_layer)
+        model = load_quant(str(path_to_model), str(
+            pt_path), shared.args.wbits, shared.args.groupsize, shared.args.pre_layer)
     else:
         threshold = False if model_type == 'gptj' else 128
-        model = load_quant(str(path_to_model), str(pt_path), shared.args.wbits, shared.args.groupsize, kernel_switch_threshold=threshold)
+        model = load_quant(str(path_to_model), str(
+            pt_path), shared.args.wbits, shared.args.groupsize, kernel_switch_threshold=threshold)
 
         # accelerate offload (doesn't work properly)
         if shared.args.gpu_memory or torch.cuda.device_count() > 1:
             if shared.args.gpu_memory:
-                memory_map = list(map(lambda x: x.strip(), shared.args.gpu_memory))
-                max_cpu_memory = shared.args.cpu_memory.strip() if shared.args.cpu_memory is not None else '99GiB'
+                memory_map = list(
+                    map(lambda x: x.strip(), shared.args.gpu_memory))
+                max_cpu_memory = shared.args.cpu_memory.strip(
+                ) if shared.args.cpu_memory is not None else '99GiB'
                 max_memory = {}
                 for i in range(len(memory_map)):
-                    max_memory[i] = f'{memory_map[i]}GiB' if not re.match('.*ib$', memory_map[i].lower()) else memory_map[i]
+                    max_memory[i] = f'{memory_map[i]}GiB' if not re.match(
+                        '.*ib$', memory_map[i].lower()) else memory_map[i]
                 max_memory['cpu'] = max_cpu_memory
             else:
                 max_memory = accelerate.utils.get_balanced_memory(model)
 
-            device_map = accelerate.infer_auto_device_map(model, max_memory=max_memory, no_split_module_classes=["LlamaDecoderLayer"])
+            device_map = accelerate.infer_auto_device_map(
+                model, max_memory=max_memory, no_split_module_classes=["LlamaDecoderLayer"])
             print("Using the following device map for the quantized model:", device_map)
             # https://huggingface.co/docs/accelerate/package_reference/big_modeling#accelerate.dispatch_model
-            model = accelerate.dispatch_model(model, device_map=device_map, offload_buffers=True)
+            model = accelerate.dispatch_model(
+                model, device_map=device_map, offload_buffers=True)
 
         # No offload
         elif not shared.args.cpu:
