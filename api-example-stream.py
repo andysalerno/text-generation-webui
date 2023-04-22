@@ -15,8 +15,13 @@ try:
 except ImportError:
     print("Websockets package not found. Make sure it's installed.") 
 
-HOST = 'localhost:5005'
-URI = f'ws://{HOST}/api/v1/stream'
+# For local streaming, the websockets are hosted without ssl - ws://
+# HOST = 'localhost:5005'
+# URI = f'ws://{HOST}/api/v1/stream'
+
+# For reverse-proxied streaming, the remote will likely host with ssl - wss://
+HOST = '<replace>.trycloudflare.com'
+URI = f'wss://{HOST}/api/v1/stream'
 
 async def run(context):
     # Note: the selected defaults change from time to time.
