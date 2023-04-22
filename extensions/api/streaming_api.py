@@ -45,13 +45,11 @@ async def _handle_connection(websocket, path):
             else:
                 to_send = a[0][skip_index:]
 
-            print(f'sending text... len: {len(to_send)}')
             await websocket.send(json.dumps({
                 'event': 'text_stream',
                 'message_num': message_num,
                 'text': to_send
             }))
-            print('sent text.')
 
             skip_index += len(to_send)
             message_num += 1
