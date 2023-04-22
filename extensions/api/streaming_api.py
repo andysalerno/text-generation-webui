@@ -44,9 +44,6 @@ async def _handle_connection(websocket, path):
                 to_send = a[skip_index:]
             else:
                 to_send = a[0][skip_index:]
-            
-            await websocket.ensure_open()
-            print('ensured open')
 
             print(f'sending text... len: {len(to_send)}')
             await websocket.send(json.dumps({
@@ -55,9 +52,6 @@ async def _handle_connection(websocket, path):
                 'text': to_send
             }))
             print('sent text.')
-
-            await websocket.drain()
-            print('drained')
 
             skip_index += len(to_send)
             message_num += 1

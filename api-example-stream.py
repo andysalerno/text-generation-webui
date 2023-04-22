@@ -44,32 +44,23 @@ async def run(context):
     }
 
     async with websockets.connect(URI) as websocket:
-        print('connected.')
         await websocket.send(json.dumps(request))
-        print('sent request.')
 
         while True:
             await websocket.drain()
             incoming_data = await websocket.recv()
-            print('got incoming data.')
             incoming_data = json.loads(incoming_data)
 
             match incoming_data['event']:
                 case 'text_stream':
-                    print('received text.')
                     yield incoming_data['text']
                 case 'stream_end':
-                    print('received stream end.')
                     return
 
 prompt = "These are the best places to see the cherry blossoms in Seattle:"
 
-async def _get_response_stream(prompt) -> AsyncIterator[str]:
-    async for response in run(prompt):
-        yield response
-
 async def print_response_stream(prompt):
-    async for response in _get_response_stream(prompt):
+    async for response in run(prompt):
         print(response, end='')
         sys.stdout.flush() # If we don't flush, we won't see tokens in realtime.
 
