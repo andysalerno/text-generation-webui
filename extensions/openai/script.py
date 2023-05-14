@@ -28,16 +28,20 @@ except ImportError:
 st_model = os.environ["OPENEDAI_EMBEDDING_MODEL"] if "OPENEDAI_EMBEDDING_MODEL" in os.environ else "all-mpnet-base-v2"
 embedding_model = None
 
-standard_stopping_strings = ['\nsystem:', '\nuser:', '\nhuman:', '\nassistant:', '\n###', ]
+standard_stopping_strings = ['\nsystem:',
+                             '\nuser:', '\nhuman:', '\nassistant:', '\n###', ]
 
 # little helper to get defaults if arg is present but None and should be the same type as default.
+
+
 def default(dic, key, default):
     val = dic.get(key, default)
     if type(val) != type(default):
         # maybe it's just something like 1 instead of 1.0
         try:
             v = type(default)(val)
-            if type(val)(v) == val:  # if it's the same value passed in, it's ok.
+            # if it's the same value passed in, it's ok.
+            if type(val)(v) == val:
                 return v
         except:
             pass
@@ -63,7 +67,8 @@ def deduce_template():
         return default_template
 
     try:
-        instruct = yaml.safe_load(open(f"characters/instruction-following/{shared.settings['instruction_template']}.yaml", 'r'))
+        instruct = yaml.safe_load(open(
+            f"characters/instruction-following/{shared.settings['instruction_template']}.yaml", 'r'))
 
         template = instruct['turn_template']
         template = template\
@@ -121,7 +126,8 @@ class Handler(BaseHTTPRequestHandler):
                 "owned_by": "user",
                 "permission": []
             }, {
-                "id": "text-davinci-002",  # /v1/embeddings text-embedding-ada-002:1536, text-davinci-002:768
+                # /v1/embeddings text-embedding-ada-002:1536, text-davinci-002:768
+                "id": "text-davinci-002",
                 "object": "model",
                 "owned_by": "user",
                 "permission": []
@@ -148,7 +154,8 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_POST(self):
         if debug:
-            print(self.headers)  # did you know... python-openai sends your linux kernel & python version?
+            # did you know... python-openai sends your linux kernel & python version?
+            print(self.headers)
         content_length = int(self.headers['Content-Length'])
         body = json.loads(self.rfile.read(content_length).decode('utf-8'))
 
@@ -167,20 +174,25 @@ class Handler(BaseHTTPRequestHandler):
             cmpl_id = "conv-%d" % (created_time)
 
             # Try to use openai defaults or map them to something with the same intent
-            stopping_strings = default(shared.settings, 'custom_stopping_strings', [])
+            stopping_strings = default(
+                shared.settings, 'custom_stopping_strings', [])
             if 'stop' in body:
                 if isinstance(body['stop'], str):
                     stopping_strings = [body['stop']]
                 elif isinstance(body['stop'], list):
                     stopping_strings = body['stop']
 
-            truncation_length = default(shared.settings, 'truncation_length', 2048)
-            truncation_length = clamp(default(body, 'truncation_length', truncation_length), 1, truncation_length)
+            truncation_length = default(
+                shared.settings, 'truncation_length', 2048)
+            truncation_length = clamp(
+                default(body, 'truncation_length', truncation_length), 1, truncation_length)
 
-            default_max_tokens = truncation_length if is_chat else 16  # completions default, chat default is 'inf' so we need to cap it.
+            # completions default, chat default is 'inf' so we need to cap it.
+            default_max_tokens = truncation_length if is_chat else 16
 
             max_tokens_str = 'length' if is_legacy else 'max_tokens'
-            max_tokens = default(body, max_tokens_str, default(shared.settings, 'max_new_tokens', default_max_tokens))
+            max_tokens = default(body, max_tokens_str, default(
+                shared.settings, 'max_new_tokens', default_max_tokens))
 
             # hard scale this, assuming the given max is for GPT3/4, perhaps inspect the requested model and lookup the context max
             while truncation_length <= max_tokens:
@@ -193,9 +205,11 @@ class Handler(BaseHTTPRequestHandler):
                 'top_k': default(body, 'best_of', 1),
                 # XXX not sure about this one, seems to be the right mapping, but the range is different (-2..2.0) vs 0..2
                 # 0 is default in openai, but 1.0 is default in other places. Maybe it's scaled? scale it.
-                'repetition_penalty': 1.18,  # (default(body, 'presence_penalty', 0) + 2.0 ) / 2.0, # 0 the real default, 1.2 is the model default, but 1.18 works better.
+                # (default(body, 'presence_penalty', 0) + 2.0 ) / 2.0, # 0 the real default, 1.2 is the model default, but 1.18 works better.
+                'repetition_penalty': 1.18,
                 # XXX not sure about this one either, same questions. (-2..2.0), 0 is default not 1.0, scale it.
-                'encoder_repetition_penalty': 1.0,  # (default(body, 'frequency_penalty', 0) + 2.0) / 2.0,
+                # (default(body, 'frequency_penalty', 0) + 2.0) / 2.0,
+                'encoder_repetition_penalty': 1.0,
                 'suffix': body.get('suffix', None),
                 'stream': default(body, 'stream', False),
                 'echo': default(body, 'echo', False),
@@ -243,8 +257,10 @@ class Handler(BaseHTTPRequestHandler):
 
                 messages = body['messages']
 
-                system_msg = ''  # You are ChatGPT, a large language model trained by OpenAI. Answer as concisely as possible. Knowledge cutoff: {knowledge_cutoff} Current date: {current_date}
-                if 'prompt' in body:  # Maybe they sent both? This is not documented in the API, but some clients seem to do this.
+                # You are ChatGPT, a large language model trained by OpenAI. Answer as concisely as possible. Knowledge cutoff: {knowledge_cutoff} Current date: {current_date}
+                system_msg = ''
+                # Maybe they sent both? This is not documented in the API, but some clients seem to do this.
+                if 'prompt' in body:
                     system_msg = body['prompt']
 
                 chat_msgs = []
@@ -256,10 +272,12 @@ class Handler(BaseHTTPRequestHandler):
                     if role == 'system':
                         system_msg += content
                     else:
-                        chat_msgs.extend([f"\n{role}: {content.strip()}"])  # Strip content? linefeed?
+                        # Strip content? linefeed?
+                        chat_msgs.extend([f"\n{role}: {content.strip()}"])
 
                 system_token_count = len(encode(system_msg)[0])
-                remaining_tokens = req_params['truncation_length'] - req_params['max_new_tokens'] - system_token_count
+                remaining_tokens = req_params['truncation_length'] - \
+                    req_params['max_new_tokens'] - system_token_count
                 chat_msg = ''
 
                 while chat_msgs:
@@ -274,7 +292,8 @@ class Handler(BaseHTTPRequestHandler):
                         break
 
                 if len(chat_msgs) > 0:
-                    print(f"truncating chat messages, dropping {len(chat_msgs)} messages.")
+                    print(
+                        f"truncating chat messages, dropping {len(chat_msgs)} messages.")
 
                 if system_msg:
                     prompt = 'system: ' + system_msg + '\n' + chat_msg + '\nassistant: '
@@ -298,13 +317,16 @@ class Handler(BaseHTTPRequestHandler):
                     prompt = body['prompt']  # XXX this can be different types
 
                 if isinstance(prompt, list):
-                    prompt = ''.join(prompt)  # XXX this is wrong... need to split out to multiple calls?
+                    # XXX this is wrong... need to split out to multiple calls?
+                    prompt = ''.join(prompt)
 
                 token_count = len(encode(prompt)[0])
                 if token_count >= req_params['truncation_length']:
-                    new_len = int(len(prompt) * (float(shared.settings['truncation_length']) - req_params['max_new_tokens']) / token_count)
+                    new_len = int(len(
+                        prompt) * (float(shared.settings['truncation_length']) - req_params['max_new_tokens']) / token_count)
                     prompt = prompt[-new_len:]
-                    print(f"truncating prompt to {new_len} characters, was {token_count} tokens. Now: {len(encode(prompt)[0])} tokens.")
+                    print(
+                        f"truncating prompt to {new_len} characters, was {token_count} tokens. Now: {len(encode(prompt)[0])} tokens.")
 
                 # pass with some expected stop strings.
                 # some strange cases of "##| Instruction: " sneaking through.
@@ -330,8 +352,10 @@ class Handler(BaseHTTPRequestHandler):
                 else:
                     # This is coming back as "system" to the openapi cli, not sure why.
                     # So yeah... do both methods? delta and messages.
-                    chunk[resp_list][0]["message"] = {'role': 'assistant', 'content': ''}
-                    chunk[resp_list][0]["delta"] = {'role': 'assistant', 'content': ''}
+                    chunk[resp_list][0]["message"] = {
+                        'role': 'assistant', 'content': ''}
+                    chunk[resp_list][0]["delta"] = {
+                        'role': 'assistant', 'content': ''}
                     # { "role": "assistant" }
 
                 response = 'data: ' + json.dumps(chunk) + '\n'
@@ -339,8 +363,10 @@ class Handler(BaseHTTPRequestHandler):
 
             # generate reply #######################################
             if debug:
-                print({'prompt': prompt, 'req_params': req_params, 'stopping_strings': stopping_strings})
-            generator = generate_reply(prompt, req_params, stopping_strings=stopping_strings, is_chat=False)
+                print({'prompt': prompt, 'req_params': req_params,
+                      'stopping_strings': stopping_strings})
+            generator = generate_reply(
+                prompt, req_params, stopping_strings=stopping_strings, is_chat=False)
 
             answer = ''
             seen_content = ''
@@ -382,7 +408,8 @@ class Handler(BaseHTTPRequestHandler):
                     # Streaming
                     new_content = answer[len_seen:]
 
-                    if not new_content or chr(0xfffd) in new_content:  # partial unicode character, don't send it yet.
+                    # partial unicode character, don't send it yet.
+                    if not new_content or chr(0xfffd) in new_content:
                         continue
 
                     seen_content = answer
@@ -400,7 +427,8 @@ class Handler(BaseHTTPRequestHandler):
                         chunk[resp_list][0]['text'] = new_content
                     else:
                         # So yeah... do both methods? delta and messages.
-                        chunk[resp_list][0]['message'] = {'content': new_content}
+                        chunk[resp_list][0]['message'] = {
+                            'content': new_content}
                         chunk[resp_list][0]['delta'] = {'content': new_content}
                     response = 'data: ' + json.dumps(chunk) + '\n'
                     self.wfile.write(response.encode('utf-8'))
@@ -460,7 +488,8 @@ class Handler(BaseHTTPRequestHandler):
             }
 
             if is_chat:
-                resp[resp_list][0]["message"] = {"role": "assistant", "content": answer}
+                resp[resp_list][0]["message"] = {
+                    "role": "assistant", "content": answer}
             else:
                 resp[resp_list][0]["text"] = answer
 
@@ -478,9 +507,11 @@ class Handler(BaseHTTPRequestHandler):
             input = body.get('input', '')
 
             instruction_template = deduce_template()
-            edit_task = instruction_template.format(instruction=instruction, input=input)
+            edit_task = instruction_template.format(
+                instruction=instruction, input=input)
 
-            truncation_length = default(shared.settings, 'truncation_length', 2048)
+            truncation_length = default(
+                shared.settings, 'truncation_length', 2048)
             token_count = len(encode(edit_task)[0])
             max_tokens = truncation_length - token_count
 
@@ -512,9 +543,11 @@ class Handler(BaseHTTPRequestHandler):
             }
 
             if debug:
-                print({'edit_template': edit_task, 'req_params': req_params, 'token_count': token_count})
-            
-            generator = generate_reply(edit_task, req_params, stopping_strings=standard_stopping_strings, is_chat=False)
+                print({'edit_template': edit_task,
+                      'req_params': req_params, 'token_count': token_count})
+
+            generator = generate_reply(
+                edit_task, req_params, stopping_strings=standard_stopping_strings, is_chat=False)
 
             answer = ''
             for a in generator:
@@ -541,7 +574,8 @@ class Handler(BaseHTTPRequestHandler):
             }
 
             if debug:
-                print({'answer': answer, 'completion_token_count': completion_token_count})
+                print(
+                    {'answer': answer, 'completion_token_count': completion_token_count})
 
             response = json.dumps(resp)
             self.wfile.write(response.encode('utf-8'))
@@ -561,14 +595,19 @@ class Handler(BaseHTTPRequestHandler):
             self.send_header('Content-Type', 'application/json')
             self.end_headers()
 
-            width, height = [ int(x) for x in default(body, 'size', '1024x1024').split('x') ]  # ignore the restrictions on size
-            response_format = default(body, 'response_format', 'url')  # or b64_json
-            
+            # ignore the restrictions on size
+            width, height = [int(x) for x in default(
+                body, 'size', '1024x1024').split('x')]
+            response_format = default(
+                body, 'response_format', 'url')  # or b64_json
+
             payload = {
-                'prompt': body['prompt'],  # ignore prompt limit of 1000 characters
+                # ignore prompt limit of 1000 characters
+                'prompt': body['prompt'],
                 'width': width,
                 'height': height,
-                'batch_size': default(body, 'n', 1)  # ignore the batch limits of max 10
+                # ignore the batch limits of max 10
+                'batch_size': default(body, 'n', 1)
             }
 
             resp = {
@@ -586,7 +625,9 @@ class Handler(BaseHTTPRequestHandler):
                 if response_format == 'b64_json':
                     resp['data'].extend([{'b64_json': b64_json}])
                 else:
-                    resp['data'].extend([{'url': f'data:image/png;base64,{b64_json}'}])  # yeah it's lazy. requests.get() will not work with this
+                    # yeah it's lazy. requests.get() will not work with this
+                    resp['data'].extend(
+                        [{'url': f'data:image/png;base64,{b64_json}'}])
 
             response = json.dumps(resp)
             self.wfile.write(response.encode('utf-8'))
@@ -607,7 +648,8 @@ class Handler(BaseHTTPRequestHandler):
                     return float_list_to_base64(emb)
                 else:
                     return emb
-            data = [{"object": "embedding", "embedding": enc_emb(emb), "index": n} for n, emb in enumerate(embeddings)]
+            data = [{"object": "embedding", "embedding": enc_emb(
+                emb), "index": n} for n, emb in enumerate(embeddings)]
 
             response = json.dumps({
                 "object": "list",
@@ -620,7 +662,8 @@ class Handler(BaseHTTPRequestHandler):
             })
 
             if debug:
-                print(f"Embeddings return size: {len(embeddings[0])}, number: {len(embeddings)}")
+                print(
+                    f"Embeddings return size: {len(embeddings[0])}, number: {len(embeddings)}")
             self.wfile.write(response.encode('utf-8'))
         elif '/moderations' in self.path:
             # for now do nothing, just don't error.
@@ -676,24 +719,28 @@ class Handler(BaseHTTPRequestHandler):
 def run_server():
     global embedding_model
     try:
-        embedding_model = SentenceTransformer(st_model)
-        print(f"\nLoaded embedding model: {st_model}, max sequence length: {embedding_model.max_seq_length}")
+        embedding_model = SentenceTransformer(st_model, device='cpu')
+        print(
+            f"\nLoaded embedding model: {st_model}, max sequence length: {embedding_model.max_seq_length}")
     except:
         print(f"\nFailed to load embedding model: {st_model}")
         pass
 
-    server_addr = ('0.0.0.0' if shared.args.listen else '127.0.0.1', params['port'])
+    server_addr = (
+        '0.0.0.0' if shared.args.listen else '127.0.0.1', params['port'])
     server = ThreadingHTTPServer(server_addr, Handler)
     if shared.args.share:
         try:
             from flask_cloudflared import _run_cloudflared
             public_url = _run_cloudflared(params['port'], params['port'] + 1)
-            print(f'Starting OpenAI compatible api at\nOPENAI_API_BASE={public_url}/v1')
+            print(
+                f'Starting OpenAI compatible api at\nOPENAI_API_BASE={public_url}/v1')
         except ImportError:
             print('You should install flask_cloudflared manually')
     else:
-        print(f'Starting OpenAI compatible api:\nOPENAI_API_BASE=http://{server_addr[0]}:{server_addr[1]}/v1')
-        
+        print(
+            f'Starting OpenAI compatible api:\nOPENAI_API_BASE=http://{server_addr[0]}:{server_addr[1]}/v1')
+
     server.serve_forever()
 
 
